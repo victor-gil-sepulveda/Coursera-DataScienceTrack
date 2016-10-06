@@ -111,3 +111,4 @@ result <- aggregate(df[,names(df) != "subject" & names(df) != "activity"] ,
                     mean, 
                     na.rm = TRUE)
 result <- append_mean_to_all_but_subject_and_activity(result)
+write.table(result, row.name=FALSE) 
