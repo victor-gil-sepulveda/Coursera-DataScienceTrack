@@ -3,7 +3,7 @@ knitr::opts_chunk$set(echo = TRUE)
 options(scipen = 1, digits = 8)
 ```
 
-```{r precalc, echo=FALSE}
+```{r precalc, echo=FALSE, results = "hide"}
 # Package dependencies, uncomment if needed
 # install.packages("ggplot2")
 # install.packages("data.table")
@@ -12,6 +12,7 @@ options(scipen = 1, digits = 8)
 # install.packages("codetools")
 
 # Package loading
+library(knitr)
 library(ggplot2)
 library(data.table)
 library(gridExtra)
@@ -105,16 +106,16 @@ p_injuries = get_percent(injuries_per_event, 0.8)
 
 ```
 
-The relative number of injured and deceased people per event (see `r figure("PieHuman", display = "cite")`) show that tornadoes are responsible of most of the cases: `r p_fatalities[EVTYPE=="TORNADO",]$sum` people died due to tornadoes and  `r p_injuries[EVTYPE=="TORNADO",]$sum` were injured, which is a `r p_fatalities[EVTYPE=="TORNADO",]$sum *100 / sum(p_fatalities$sum)`% and a `r p_injuries[EVTYPE=="TORNADO",]$sum *100 / sum(p_injuries$sum)` of the total respectively).
+The relative number of injured and deceased people per event (see `r figs("PieHuman", display = "cite")`) show that tornadoes are responsible of most of the cases: `r p_fatalities[EVTYPE=="TORNADO",]$sum` people died due to tornadoes and  `r p_injuries[EVTYPE=="TORNADO",]$sum` were injured, which is a `r p_fatalities[EVTYPE=="TORNADO",]$sum *100 / sum(p_fatalities$sum)`% and a `r p_injuries[EVTYPE=="TORNADO",]$sum *100 / sum(p_injuries$sum)` of the total respectively).
 
 ```{r}
 p1 <- pie_chart(p_fatalities, "Fatalities")
 p2 <- pie_chart(p_injuries, "Injuries")
 g = grid.arrange(top="Effect of storms in citizen health", p1, p2, ncol=2,  newpage = TRUE)
+```
+```{r, echo=FALSE}
 figs(name="PieHuman")
 ```
-
-
 
 ```{r}
 crop_dmg_per_event = dt[,list(sum=sum(CROPDMGVAL)), by=EVTYPE]
@@ -124,14 +125,17 @@ p_crop = get_percent(crop_dmg_per_event, 0.8)
 p_prop = get_percent(prop_dmg_per_event, 0.8)
 ```
 
-The material costs of storm-related events are summarized in a relative comparison plot (see `r figure("PieStuff", display = "cite")`) and a bar plot with the total costs in US $ (see `r figure("BarMoney", display = "cite")`). `r figure("PieStuff", display = "cite")` shows that ice storms are the main responsible of crop damage and floods are the main responsible of material damages in private property. Finally, the results shown in `r figure("BarMoney", display = "cite")`, clearly indicate that ice storms are responsible of most of the costs.
+The material costs of storm-related events are summarized in a relative comparison plot (see `r figs("PieStuff", display = "cite")`) and a bar plot with the total costs in US $ (see `r figs("BarMoney", display = "cite")`). `r figs("PieStuff", display = "cite")` shows that ice storms are the main responsible of crop damage and floods are the main responsible of material damages in private property. Finally, the results shown in `r figs("BarMoney", display = "cite")`, clearly indicate that ice storms are responsible of most of the costs.
 
 ```{r}
 p1 <- pie_chart(p_crop, "Crops")
 p2 <- pie_chart(p_prop, "Properties")
 g = grid.arrange(top="Effect of storms in crops and properties", p1, p2, ncol=2,  newpage = TRUE)
+```
+```{r, echo=FALSE}
 figs(name="PieStuff")
-
+```
+```{r, echo=FALSE}
 # Get the 5 that produce more damage of them
 
 a = get_percent(crop_dmg_per_event, 0.9)
@@ -144,6 +148,8 @@ ggplot(all, aes(EVTYPE, sum)) +
   ylab("Cost ($)")+
   ggtitle("Storm damage to crops and properties: Comparison")+
   theme(axis.text.x = element_text(angle=45, hjust=1))
+```
+```{r, echo=FALSE}
 figs(name="BarMoney")
 ```
 
