@@ -68,7 +68,7 @@ and Atmospheric Administration (NOAA) this team has been able to devise the key 
 
 ##Introduction
 
-The National Oceanic and Atmospheric Administration (NOAA) documents the occurrence of storms and related phenomenaprone to cause intensive damages in both lifes and economic costs. Although the storms of such magnitude are usually not difficult to predict, the range of related events are. It is important to know beforehand which are the most destructive events, in order to improve the effectiveness of the surveillance and prevention plans. In this study we will use R through its RStudio interface, as well as the knittr package in order to identify the most destructive events. Please review the code used to obtain this document in order to know the other packages used to perform this study.  
+The National Oceanic and Atmospheric Administration (NOAA) documents the occurrence of storms and related phenomenaprone to cause intensive damages in both lifes and economic costs. Although the storms of such magnitude are usually not difficult to predict, the range of related events are. It is important to know beforehand which are the most destructive events, in order to improve the effectiveness of the surveillance and prevention plans. In this study we will use R through its RStudio interface, as well as the knittr package in order to identify the most destructive events. Please review the code used to obtain this document in order to know the other packages used to perform this study. The code is available here: https://github.com/victor-gil-sepulveda/Coursera-DataScienceTrack/tree/master/RepResearch/Ex2 .
 
 ## Data Processing
 
