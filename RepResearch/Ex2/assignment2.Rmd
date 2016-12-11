@@ -1,0 +1,154 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 1, digits = 8)
+```
+
+```{r precalc, echo=FALSE}
+# Package dependencies, uncomment if needed
+# install.packages("ggplot2")
+# install.packages("data.table")
+# install.packages("gridExtra")
+# install.packages("captioner")
+# install.packages("codetools")
+
+# Package loading
+library(ggplot2)
+library(data.table)
+library(gridExtra)
+library(captioner)
+library(codetools)
+
+figs <- captioner(prefix="Fig.")
+figs(name="PieHuman","Relative number of injured and deceased people due to the storm-related events. Only the biggest ones and up to a 90% of the total value are shown.")
+figs(name="PieStuff","Comparison of the relative costs of each of the storm-related events resposible of more than 90% of the costs for damages in crops and private properties. Only the most relevant events are shown.")
+figs(name="BarMoney","Cost in US dollars of the different events occurring during storms. Here we plot the events responsible of more than the 90% of the costs associated to damages in properties and crops.")
+
+# Tools
+get_percent <- function(in_data_sum, percent){
+  total = sum(in_data_sum$sum)
+  ordered = in_data_sum[with(in_data_sum, order(-sum)), ]
+  accum <- 0
+  i <- 1
+  while (accum < percent * total){
+    accum <- accum + ordered$sum[i]
+    i<-i+1
+  }
+  return(head(ordered,i))
+}
+
+pie_chart <- function(data, title){
+  ggplot(data=data, aes(x="", y=sum, fill = EVTYPE)) + 
+        ggtitle(title) +
+        geom_bar(width = 1, stat = "identity", color='black') +
+        guides(fill=guide_legend(override.aes=list(colour=NA))) +
+        coord_polar(theta="y") + 
+        theme_minimal()+
+        scale_fill_discrete(name="Event") +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank(),
+          panel.grid=element_blank(),
+          axis.ticks = element_blank(),
+          plot.title=element_text(size=14, face="bold")
+        ) +
+        theme(axis.text.x=element_blank()) +
+        theme(legend.text=element_text(size=5))+
+        theme(legend.key.size = unit(0.5, "lines"))
+}
+```
+
+# Tornadoes and ice storms are responsible of most of the damages associated with storm episodes.
+
+## Abstract
+
+Storms are one of the most difficult to prevent natural disasters. Heavy storms can produce damages thousands of lives and millions of dollars. Thanks to the data gathered in the official publication of the National Oceanic 
+and Atmospheric Administration (NOAA) this team has been able to devise the key events that may be monitored in order to lower the adverse effects of such uncontrolable natural phenomena. Note: This is the outcome of the second assignment of Coursera's Reproducible Research course from Johns Hopkins University.
+
+##Introduction
+
+The National Oceanic and Atmospheric Administration (NOAA) documents the occurrence of storms and related phenomenaprone to cause intensive damages in both lifes and economic costs. Although the storms of such magnitude are usually not difficult to predict, the range of related events are. It is important to know beforehand which are the most destructive events, in order to improve the effectiveness of the surveillance and prevention plans. In this study we will use R through its RStudio interface, as well as the knittr package in order to identify the most destructive events. Please review the code used to obtain this document in order to know the other packages used to perform this study.  
+
+## Data Processing
+
+The data was downloaded from https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2 the 11 of December 2016. 
+
+```{r, cache=TRUE}
+# Data loading
+data <- read.csv("repdata_data_StormData.csv.bz2")
+dt <- data.table(data)
+```
+
+As the damage costs for crops and properties where tabulated in two columns (base value + exponent), we had to add two calculated columns to the dataset with the final values of these variables.
+
+```{r, cache=TRUE}
+dt$PROPDMGEXP <- as.character(dt$PROPDMGEXP)
+dt$CROPDMGEXP <- as.character(dt$CROPDMGEXP)
+conv = c(K=10^3, M=10^6, B=10^9)
+
+dt$PROPDMGVAL <- mapply (val = dt$PROPDMG, mult = dt$PROPDMGEXP, function(val, mult){if (val != 0 && mult %in% c("K","M","B")){return(val*as.numeric(conv[mult]))}else{return(0)}})
+dt$CROPDMGVAL <- mapply (val = dt$PROPDMG, mult = dt$CROPDMGEXP, function(val, mult){if (val != 0 && mult %in% c("K","M","B")){return(val*as.numeric(conv[mult]))}else{return(0)}})
+```
+
+Event dates are not loaded correctly, but as we are not going to use them, no further modification of the dataset is needed.
+
+With this pre-processed data set we have calculated the total amount of deceased and injured people per storm-related event and the total costs (in US $) of the damages due to each one of this events in crops and private property.   
+
+## Results
+
+```{r}
+fatalities_per_event = dt[,list(sum=sum(FATALITIES)), by=EVTYPE]
+injuries_per_event = dt[,list(sum=sum(INJURIES)), by=EVTYPE]
+
+p_fatalities = get_percent(fatalities_per_event, 0.8)
+p_injuries = get_percent(injuries_per_event, 0.8)
+
+```
+
+The relative number of injured and deceased people per event (see `r figure("PieHuman", display = "cite")`) show that tornadoes are responsible of most of the cases: `r p_fatalities[EVTYPE=="TORNADO",]$sum` people died due to tornadoes and  `r p_injuries[EVTYPE=="TORNADO",]$sum` were injured, which is a `r p_fatalities[EVTYPE=="TORNADO",]$sum *100 / sum(p_fatalities$sum)`% and a `r p_injuries[EVTYPE=="TORNADO",]$sum *100 / sum(p_injuries$sum)` of the total respectively).
+
+```{r}
+p1 <- pie_chart(p_fatalities, "Fatalities")
+p2 <- pie_chart(p_injuries, "Injuries")
+g = grid.arrange(top="Effect of storms in citizen health", p1, p2, ncol=2,  newpage = TRUE)
+figs(name="PieHuman")
+```
+
+
+
+```{r}
+crop_dmg_per_event = dt[,list(sum=sum(CROPDMGVAL)), by=EVTYPE]
+prop_dmg_per_event = dt[,list(sum=sum(PROPDMGVAL)), by=EVTYPE]
+
+p_crop = get_percent(crop_dmg_per_event, 0.8)
+p_prop = get_percent(prop_dmg_per_event, 0.8)
+```
+
+The material costs of storm-related events are summarized in a relative comparison plot (see `r figure("PieStuff", display = "cite")`) and a bar plot with the total costs in US $ (see `r figure("BarMoney", display = "cite")`). `r figure("PieStuff", display = "cite")` shows that ice storms are the main responsible of crop damage and floods are the main responsible of material damages in private property. Finally, the results shown in `r figure("BarMoney", display = "cite")`, clearly indicate that ice storms are responsible of most of the costs.
+
+```{r}
+p1 <- pie_chart(p_crop, "Crops")
+p2 <- pie_chart(p_prop, "Properties")
+g = grid.arrange(top="Effect of storms in crops and properties", p1, p2, ncol=2,  newpage = TRUE)
+figs(name="PieStuff")
+
+# Get the 5 that produce more damage of them
+
+a = get_percent(crop_dmg_per_event, 0.9)
+b = get_percent(prop_dmg_per_event, 0.9)
+all = rbind(cbind(a, type = rep ("Crops", dim(a)[1])), cbind(b, type = rep ("Prop.", dim(b)[1])))
+
+ggplot(all, aes(EVTYPE, sum)) +   
+  geom_bar(aes(fill = type), position = "dodge", stat="identity") +
+  xlab("Event")+ 
+  ylab("Cost ($)")+
+  ggtitle("Storm damage to crops and properties: Comparison")+
+  theme(axis.text.x = element_text(angle=45, hjust=1))
+figs(name="BarMoney")
+```
+
+## Conclusions
+
+In this study we have summarized some of the costs relative to the storm-related events tabulated in NOAA's Storms database. The results indicate that major investments must be done in the surveillance and prediction of tornadoes and ice storms, as the easier way to save thousands of lives and millions of dollars.
+
+
